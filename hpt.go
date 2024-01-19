@@ -432,9 +432,9 @@ func (s *Statistic) Report() string {
 			report += "\n"
 		}
 		report += fmt.Sprintf("Test in %s, %d requests, %d errors, %s read\n"+
-			"\tStats\t\tAvg\t\tStdev\t\tMax\t\t+/- Stdev\n"+
-			"\tLatency\t\t%s\t\t%s\t\t%s\t\t%.2f%%\n"+
-			"\tQPS\t\t%.2f\t\t%.2f\t\t%d\t\t%.2f%%\n"+
+			"\tStats\tAvg\tStdev\tMax\t+/- Stdev\n"+
+			"\tLatency\t%s\t%s\t%s\t%.2f%%\n"+
+			"\tQPS\t%.2f\t%.2f\t%d\t%.2f%%\n"+
 			"Latency Distribution\n"+
 			"\t50%%\t%s\n"+
 			"\t75%%\t%s\n"+
@@ -491,13 +491,18 @@ func worker(ctx context.Context, conf *Config, client *http.Client, s *Statistic
 		}
 
 		s.record(0, err, latency, len(body)+getHTTPHeaderSize(header))
-		s.Logger().Debug("Request",
+		l := s.Logger().Debug
+		if err != nil {
+			l = s.Logger().Info
+		}
+		l("Request",
 			zap.String("request.url", req.URL.String()),
 			zap.Any("request.header", req.Header),
 			zap.ByteString("request.body", reqBody),
 			zap.Int("status_code", statusCode),
 			zap.Any("response.header", header),
 			zap.ByteString("response.body", body),
+			zap.Duration("latency", latency),
 		)
 	}
 }
